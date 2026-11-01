@@ -1,0 +1,937 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Физика</title>
+<style>
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    font-family:"Segoe UI",Roboto,Arial,sans-serif;
+    background:linear-gradient(180deg,#eaf6fd 0%,#dceffb 45%,#cfe8f8 100%);
+    min-height:100vh;color:#12324d;padding:26px 16px 70px;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:1020px;margin:0 auto;}
+  header h1{font-size:26px;margin:0 0 6px;color:#0d3a5c;letter-spacing:.2px;}
+  header .sub{margin:0 0 22px;color:#4a7391;font-size:14px;line-height:1.5;}
+  .screen{display:none;}
+  .screen.active{display:block;animation:fade .35s ease;}
+  @keyframes fade{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+
+  .panel{
+    background:#fff;border-radius:18px;padding:26px 28px;
+    box-shadow:0 10px 30px rgba(21,86,134,.12),0 2px 6px rgba(21,86,134,.08);
+  }
+  .panel h2{margin:0 0 6px;font-size:19px;color:#0d3a5c;}
+  .panel .lead{margin:0 0 20px;color:#5a7f99;font-size:14px;line-height:1.5;}
+
+  /* ---------- Экран 1 ---------- */
+  .id-card{max-width:460px;margin:36px auto;text-align:left;}
+  .id-card h2{text-align:center;margin-bottom:4px;}
+  .id-card .lead{text-align:center;}
+  .field{margin-bottom:18px;}
+  .field label{display:block;font-size:13.5px;font-weight:600;color:#38617e;margin-bottom:7px;}
+  .field input{
+    width:100%;padding:12px 14px;font-size:15.5px;border:1.5px solid #cfe3f2;border-radius:11px;
+    background:#fbfdff;color:#12324d;box-shadow:inset 0 1px 3px rgba(21,86,134,.06);
+    transition:.2s;outline:none;font-family:inherit;
+  }
+  .field input:focus{border-color:#4aa3dd;box-shadow:0 0 0 4px rgba(74,163,221,.16);}
+  .id-card .btn{width:100%;margin-top:6px;}
+
+  /* ---------- Кнопки ---------- */
+  .btn{
+    border:none;border-radius:11px;padding:12px 22px;font-size:15px;font-weight:600;
+    cursor:pointer;font-family:inherit;transition:.18s;
+  }
+  .btn-primary{background:linear-gradient(180deg,#3ea0e0,#2b7fc0);color:#fff;box-shadow:0 6px 14px rgba(43,127,192,.35);}
+  .btn-primary:hover{transform:translateY(-1px);box-shadow:0 9px 18px rgba(43,127,192,.42);}
+  .btn-ghost{background:#eaf4fc;color:#20618e;border:1.5px solid #cbe2f3;}
+  .btn-ghost:hover{background:#ddedfa;}
+  .btn:active{transform:translateY(1px);}
+  .actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:20px;}
+
+  /* ---------- Табы формул ---------- */
+  .formula-tabs{display:flex;flex-wrap:wrap;gap:9px;margin-bottom:16px;}
+  .tab{
+    padding:9px 15px;border-radius:10px;border:1.5px solid #cbe2f3;background:#f4fafe;
+    color:#2a6187;font-size:13.5px;font-weight:600;cursor:pointer;transition:.18s;font-family:inherit;
+  }
+  .tab:hover{background:#e3f2fc;}
+  .tab.active{background:linear-gradient(180deg,#3ea0e0,#2b7fc0);color:#fff;border-color:#2b7fc0;
+    box-shadow:0 5px 12px rgba(43,127,192,.3);}
+
+  .task-line{
+    background:#f2f9fe;border-left:4px solid #3ea0e0;border-radius:0 11px 11px 0;
+    padding:10px 16px;font-size:14px;color:#2a6187;margin-bottom:18px;
+  }
+
+  /* ---------- Зона сборки ---------- */
+  .build-zone{
+    background:#fff;border:2px dashed #b9d9ee;border-radius:16px;padding:28px 20px;
+    min-height:130px;display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:10px;
+    box-shadow:0 6px 18px rgba(21,86,134,.08);transition:.25s;
+  }
+  .build-zone.ok{border-color:#3ec07a;background:#f4fdf8;}
+  .fix{
+    font-size:26px;font-weight:600;color:#12466b;font-style:italic;
+    font-family:"Cambria",Georgia,"Times New Roman",serif;
+  }
+  .slot{
+    min-width:76px;min-height:52px;border:2px dashed #9ec9e6;border-radius:12px;background:#f2f9fe;
+    display:flex;align-items:center;justify-content:center;font-size:23px;font-weight:600;
+    color:#0f4a72;position:relative;padding:0 14px;transition:.15s;cursor:pointer;
+    font-family:"Cambria",Georgia,"Times New Roman",serif;
+  }
+  .slot:hover{border-color:#6fb4de;}
+  .slot.filled{border-style:solid;border-color:#2b7fc0;background:#e2f1fc;
+    box-shadow:0 3px 9px rgba(43,127,192,.18);}
+  .slot.over{border-color:#3ea0e0;background:#d6ecfb;transform:scale(1.05);}
+  .slot .ph{color:#a9c9de;font-size:20px;}
+  .slot.error{border-color:#e05252;background:#fdecec;color:#b32a2a;animation:shake .35s;}
+  @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
+  .slot .tip{
+    display:none;position:absolute;bottom:calc(100% + 11px);left:50%;transform:translateX(-50%);
+    background:#8f2323;color:#fff;font-size:12.5px;font-weight:500;line-height:1.35;
+    padding:8px 11px;border-radius:9px;width:215px;text-align:center;z-index:40;
+    box-shadow:0 6px 16px rgba(0,0,0,.22);font-family:"Segoe UI",sans-serif;
+  }
+  .slot.error .tip{display:block;}
+  .slot .tip::after{
+    content:"";position:absolute;top:100%;left:50%;transform:translateX(-50%);
+    border:6px solid transparent;border-top-color:#8f2323;
+  }
+  .frac{display:inline-flex;flex-direction:column;align-items:stretch;gap:4px;vertical-align:middle;}
+  .frac .bar{height:2.5px;background:#12466b;border-radius:3px;margin:2px 0;}
+  .frac .slot{min-width:120px;}
+
+  /* ---------- Карточки ---------- */
+  .cards{
+    display:flex;flex-wrap:wrap;gap:11px;margin-top:20px;min-height:64px;padding:16px;
+    background:#f3fafe;border-radius:14px;border:1.5px solid #d9ecf9;justify-content:center;
+    align-items:center;
+  }
+  .card{
+    padding:11px 20px;border-radius:12px;background:#e3f3ff;border:2px solid #1f5c8b;
+    color:#0d3a5c;font-size:21px;font-weight:600;cursor:grab;user-select:none;
+    box-shadow:0 4px 10px rgba(21,86,134,.15);transition:.15s;
+    font-family:"Cambria",Georgia,"Times New Roman",serif;
+  }
+  .card:hover{transform:scale(1.07);box-shadow:0 7px 16px rgba(21,86,134,.24);}
+  .card.dragging{opacity:.4;}
+  .card sub{font-size:.62em;}
+  .empty-note{color:#8fb3c9;font-size:13.5px;font-style:italic;}
+
+  /* ---------- Сообщения ---------- */
+  .msg{margin-top:16px;padding:12px 16px;border-radius:11px;font-size:14.5px;font-weight:600;}
+  .msg.ok{background:#e4faee;color:#137a45;border-left:4px solid #3ec07a;}
+  .msg.bad{background:#fdeaea;color:#9c2626;border-left:4px solid #e05252;}
+  .err-list{margin:10px 0 0;padding-left:22px;color:#9c2626;font-size:14px;line-height:1.6;}
+
+  /* ---------- Задачи ---------- */
+  .task{
+    background:#fff;border-radius:14px;padding:16px 18px;margin-bottom:14px;
+    border:1.5px solid #d9ecf9;box-shadow:0 5px 14px rgba(21,86,134,.08);transition:.2s;
+  }
+  .task-num{font-size:12px;font-weight:700;letter-spacing:.7px;text-transform:uppercase;
+    color:#3d86b8;margin-bottom:7px;}
+  .task-text{font-size:15px;line-height:1.55;margin-bottom:12px;}
+  .answer-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+  .answer-row input{
+    width:150px;padding:10px 12px;font-size:15.5px;border:1.5px solid #cfe3f2;border-radius:10px;
+    background:#fbfdff;outline:none;font-family:inherit;color:#12324d;transition:.2s;
+  }
+  .answer-row input:focus{border-color:#4aa3dd;box-shadow:0 0 0 4px rgba(74,163,221,.16);}
+  .answer-row .unit{font-weight:600;color:#3d7ba6;font-size:15px;}
+  .task.correct{border-color:#3ec07a;background:#f4fdf8;}
+  .task.wrong{border-color:#e05252;background:#fdf5f5;}
+  .fb{margin-top:11px;font-size:14px;line-height:1.55;padding:10px 13px;border-radius:10px;}
+  .fb.ok{background:#e4faee;color:#137a45;border-left:4px solid #3ec07a;}
+  .fb.no{background:#fdeaea;color:#9c2626;border-left:4px solid #e05252;}
+
+  .result{margin-top:20px;padding:18px 20px;border-radius:14px;font-size:16px;line-height:1.5;
+    display:none;}
+  .result.win{background:linear-gradient(135deg,#d6f8e4,#bff2d5);color:#0f7a45;
+    border:2px solid #3ec07a;font-size:19px;text-align:center;font-weight:700;}
+  .result.lose{background:#fdf3e4;color:#8a5a12;border:2px solid #f0b95e;font-weight:600;}
+
+  /* ---------- Отчёт ---------- */
+  .report{margin-top:24px;background:#fff;border-radius:16px;padding:20px 22px;
+    border:1.5px solid #d9ecf9;box-shadow:0 6px 18px rgba(21,86,134,.08);display:none;}
+  .report h3{margin:0 0 6px;font-size:17px;color:#0d3a5c;}
+  .report h4{margin:22px 0 10px;font-size:15px;color:#0d3a5c;}
+  .rep-sub{margin:0 0 10px;font-size:13.5px;color:#5a7f99;}
+  .csv-box{
+    font-family:Consolas,"Courier New",monospace;font-size:13.5px;background:#f4fafe;
+    border:1.5px dashed #b9d9ee;border-radius:10px;padding:12px 14px;
+    color:#1a4b6e;white-space:pre-wrap;word-break:break-all;line-height:1.5;
+  }
+  .sol{background:#fdf7ef;border-left:4px solid #f0b95e;border-radius:0 10px 10px 0;
+    padding:10px 14px;margin-bottom:10px;font-size:14px;line-height:1.55;color:#6b4a12;}
+  .sol b{color:#8a5a12;}
+  .sol .no-err{color:#137a45;}
+  @media(max-width:600px){
+    .panel{padding:20px 16px;}
+    .fix{font-size:22px;}
+    .slot{font-size:20px;min-height:46px;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Физика</h1>
+    <p class="sub">Практикум: тепловые явления в технике и на производстве</p>
+  </header>
+
+  <!-- ЭКРАН 1 -->
+  <section id="screenId" class="screen active">
+    <div class="panel id-card">
+      <h2>Идентификация студента</h2>
+      <p class="lead">Введите свои данные, чтобы результаты попали в отчёт преподавателю.</p>
+      <div class="field">
+        <label for="inpName">Фамилия студента</label>
+        <input type="text" id="inpName" placeholder="Например: Иванов" autocomplete="off">
+      </div>
+      <div class="field">
+        <label for="inpGroup">№ группы</label>
+        <input type="text" id="inpGroup" placeholder="Например: ТС-11" autocomplete="off">
+      </div>
+      <button class="btn btn-primary" id="startBtn">Начать работу</button>
+    </div>
+  </section>
+
+  <!-- ЭКРАН 2 -->
+  <section id="screenFormula" class="screen">
+    <div class="panel">
+      <h2>Собери формулу по теме «Термодинамика»</h2>
+      <p class="lead">Выбери физический смысл формулы, затем перетащи карточки в пустые слоты. Клик по заполненному слоту возвращает карточку обратно.</p>
+
+      <div class="formula-tabs" id="tabs"></div>
+      <div class="task-line" id="formulaLine"></div>
+
+      <div class="build-zone" id="buildZone"></div>
+      <div class="cards" id="cardsBox"></div>
+
+      <div id="formulaErrors"></div>
+
+      <div class="actions">
+        <button class="btn btn-primary" id="checkFormulaBtn">Проверить</button>
+        <button class="btn btn-ghost" id="resetFormulaBtn">Сбросить</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ЭКРАН 3 -->
+  <section id="screenTasks" class="screen">
+    <div class="panel">
+      <h2>Реши 5 задач по этой формуле</h2>
+      <p class="lead" id="tasksSub"></p>
+      <div id="taskList"></div>
+      <div class="actions">
+        <button class="btn btn-primary" id="checkAnswersBtn">Проверить ответы</button>
+        <button class="btn btn-ghost" id="backBtn">Вернуться к формуле</button>
+      </div>
+      <div class="result" id="resultBox"></div>
+      <div class="report" id="reportBox"></div>
+    </div>
+  </section>
+</div>
+
+<script>
+/* =========================================================
+   ДАННЫЕ: подписи карточек
+   ========================================================= */
+const TOKEN_LABEL = {
+  'c':'c',
+  'm':'m',
+  't₁':'t₁',
+  't₂':'t₂',
+  'λ':'λ',
+  'L':'L',
+  'q':'q',
+  'Q_полезн':'Q<sub>полезн</sub>',
+  'Q_затрач':'Q<sub>затрач</sub>'
+};
+function label(tok){ return TOKEN_LABEL[tok] || tok; }
+
+/* =========================================================
+   ДАННЫЕ: формулы (конструктор)
+   ========================================================= */
+const FORMULAS = {
+  heat: {
+    tab: 'Нагревание / охлаждение',
+    desc: 'Количество теплоты, которое нужно для нагревания тела или которое тело отдаёт при охлаждении.',
+    layout: [
+      {t:'fix', v:'Q'}, {t:'fix', v:'='},
+      {t:'slot', id:'h1', ans:'c',  hint:'Здесь нужна удельная теплоёмкость c, Дж/(кг·°C).'},
+      {t:'fix', v:'·'},
+      {t:'slot', id:'h2', ans:'m',  hint:'Здесь нужна масса тела m, кг.'},
+      {t:'fix', v:'·('},
+      {t:'slot', id:'h3', ans:'t₂', hint:'Здесь стоит конечная температура t₂, °C.'},
+      {t:'fix', v:'−'},
+      {t:'slot', id:'h4', ans:'t₁', hint:'Здесь стоит начальная температура t₁, °C.'},
+      {t:'fix', v:')'}
+    ],
+    cards: ['c','m','t₂','t₁','λ','L','q']
+  },
+  melt: {
+    tab: 'Плавление / кристаллизация',
+    desc: 'Теплота плавления или кристаллизации вещества, взятого при температуре плавления.',
+    layout: [
+      {t:'fix', v:'Q'}, {t:'fix', v:'='},
+      {t:'slot', id:'m1', ans:'λ', hint:'Здесь нужна удельная теплота плавления λ, Дж/кг.'},
+      {t:'fix', v:'·'},
+      {t:'slot', id:'m2', ans:'m', hint:'Здесь нужна масса вещества m, кг.'}
+    ],
+    cards: ['λ','m','c','L','q']
+  },
+  vapor: {
+    tab: 'Парообразование / конденсация',
+    desc: 'Теплота, необходимая для превращения жидкости в пар, или выделяющаяся при конденсации.',
+    layout: [
+      {t:'fix', v:'Q'}, {t:'fix', v:'='},
+      {t:'slot', id:'v1', ans:'L', hint:'Здесь нужна удельная теплота парообразования L, Дж/кг.'},
+      {t:'fix', v:'·'},
+      {t:'slot', id:'v2', ans:'m', hint:'Здесь нужна масса жидкости (пара) m, кг.'}
+    ],
+    cards: ['L','m','c','λ','q']
+  },
+  eff: {
+    tab: 'КПД нагревателя',
+    desc: 'Коэффициент полезного действия нагревателя или теплового двигателя, %.',
+    layout: [
+      {t:'fix', v:'η'}, {t:'fix', v:'='},
+      {t:'frac',
+        top:   {id:'e1', ans:'Q_полезн', hint:'В числителе — полезная теплота Q полезн, Дж.'},
+        bottom:{id:'e2', ans:'Q_затрач', hint:'В знаменателе — затраченная теплота Q затрач, Дж.'}},
+      {t:'fix', v:'· 100%'}
+    ],
+    cards: ['Q_полезн','Q_затрач','c','m','λ']
+  },
+  burn: {
+    tab: 'Сгорание топлива',
+    desc: 'Теплота, которая выделяется при полном сгорании топлива.',
+    layout: [
+      {t:'fix', v:'Q'}, {t:'fix', v:'='},
+      {t:'slot', id:'b1', ans:'q', hint:'Здесь нужна удельная теплота сгорания топлива q, Дж/кг.'},
+      {t:'fix', v:'·'},
+      {t:'slot', id:'b2', ans:'m', hint:'Здесь нужна масса топлива m, кг.'}
+    ],
+    cards: ['q','m','c','λ','L']
+  }
+};
+
+/* =========================================================
+   БАНК ЗАДАЧ (30 задач, производственный контекст)
+   ========================================================= */
+const TASKS = [
+  /* ---------- Q = c·m·(t₂ − t₁) : 10 задач ---------- */
+  {f:'heat', u:'кДж', a:315,
+   q:'В цехе нужно нагреть 5 кг алюминиевого блока цилиндров от 15 °C до 85 °C. Какое количество теплоты потребуется? Удельная теплоёмкость алюминия c = 900 Дж/(кг·°C).',
+   s:'Q = c·m·(t₂ − t₁) = 900 · 5 · (85 − 15) = 900 · 5 · 70 = 315 000 Дж = 315 кДж.'},
+
+  {f:'heat', u:'кДж', a:276,
+   q:'Стальная пластина корпуса массой 2 кг нагревается от 20 °C до 320 °C. Сколько теплоты на это уйдёт? c стали = 460 Дж/(кг·°C).',
+   s:'Q = 460 · 2 · (320 − 20) = 460 · 2 · 300 = 276 000 Дж = 276 кДж.'},
+
+  {f:'heat', u:'кДж', a:57,
+   q:'Медный радиатор массой 3 кг остывает с 90 °C до 40 °C. Какое количество теплоты он отдаст окружающей среде? c меди = 380 Дж/(кг·°C).',
+   s:'Q = 380 · 3 · (90 − 40) = 380 · 3 · 50 = 57 000 Дж = 57 кДж.'},
+
+  {f:'heat', u:'°C', a:20,
+   q:'В коробку передач залито 4 кг масла (c = 2100 Дж/(кг·°C)). Оно получило 168 кДж теплоты. На сколько градусов нагрелось масло?',
+   s:'Δt = Q/(c·m) = 168 000 / (2100 · 4) = 168 000 / 8400 = 20 °C.'},
+
+  {f:'heat', u:'кг', a:5,
+   q:'При нагреве стальной детали на 50 °C затрачено 115 кДж теплоты. Какова масса детали? c стали = 460 Дж/(кг·°C).',
+   s:'m = Q/(c·Δt) = 115 000 / (460 · 50) = 115 000 / 23 000 = 5 кг.'},
+
+  {f:'heat', u:'кДж', a:420,
+   q:'В систему охлаждения добавили 4 кг антифриза с c = 3500 Дж/(кг·°C). Сколько теплоты нужно, чтобы нагреть его на 30 °C?',
+   s:'Q = 3500 · 4 · 30 = 420 000 Дж = 420 кДж.'},
+
+  {f:'heat', u:'°C', a:200,
+   q:'При резком торможении на нагрев тормозных колодок пошло 144 кДж энергии. Масса колодок 1,5 кг, c = 480 Дж/(кг·°C). На сколько градусов они нагрелись?',
+   s:'Δt = Q/(c·m) = 144 000 / (480 · 1,5) = 144 000 / 720 = 200 °C.'},
+
+  {f:'heat', u:'кДж', a:2100,
+   q:'В бойлере нагревают 10 кг воды от 20 °C до 70 °C. Сколько теплоты необходимо? c воды = 4200 Дж/(кг·°C).',
+   s:'Q = 4200 · 10 · (70 − 20) = 4200 · 10 · 50 = 2 100 000 Дж = 2100 кДж.'},
+
+  {f:'heat', u:'кДж', a:648,
+   q:'Чугунную плиту массой 8 кг (c = 540 Дж/(кг·°C)) нагрели от 25 °C до 175 °C. Какое количество теплоты затрачено?',
+   s:'Q = 540 · 8 · (175 − 25) = 540 · 8 · 150 = 648 000 Дж = 648 кДж.'},
+
+  {f:'heat', u:'°C', a:120,
+   q:'Стальной детали массой 3 кг (c = 460 Дж/(кг·°C)) передали 138 кДж теплоты. Начальная температура 20 °C. Какой стала конечная температура?',
+   s:'Δt = Q/(c·m) = 138 000 / (460 · 3) = 100 °C; t₂ = 20 + 100 = 120 °C.'},
+
+  /* ---------- Q = λm : 5 задач ---------- */
+  {f:'melt', u:'кДж', a:11.8,
+   q:'Сколько энергии нужно, чтобы расплавить 0,2 кг оловянного припоя при температуре плавления? λ олова = 59 000 Дж/кг.',
+   s:'Q = λ·m = 59 000 · 0,2 = 11 800 Дж = 11,8 кДж.'},
+
+  {f:'melt', u:'кДж', a:195,
+   q:'При кристаллизации 0,5 кг расплавленного алюминия (λ = 390 000 Дж/кг) выделяется теплота. Найдите её количество.',
+   s:'Q = λ·m = 390 000 · 0,5 = 195 000 Дж = 195 кДж.'},
+
+  {f:'melt', u:'МДж', a:4.2,
+   q:'В литейном цехе расплавляют 50 кг стали. λ стали = 84 000 Дж/кг. Сколько теплоты необходимо?',
+   s:'Q = 84 000 · 50 = 4 200 000 Дж = 4,2 МДж.'},
+
+  {f:'melt', u:'кг', a:5,
+   q:'При плавлении свинца затрачено 125 кДж теплоты. λ свинца = 25 000 Дж/кг. Какова масса расплавленного свинца?',
+   s:'m = Q/λ = 125 000 / 25 000 = 5 кг.'},
+
+  {f:'melt', u:'кДж', a:1002,
+   q:'Сколько теплоты нужно для плавления 3 кг льда при 0 °C? λ льда = 334 000 Дж/кг.',
+   s:'Q = 334 000 · 3 = 1 002 000 Дж = 1002 кДж.'},
+
+  /* ---------- Q = Lm : 5 задач ---------- */
+  {f:'vapor', u:'кДж', a:230,
+   q:'Сколько теплоты нужно, чтобы превратить в пар 0,1 кг воды при 100 °C? L = 2 300 000 Дж/кг.',
+   s:'Q = L·m = 2 300 000 · 0,1 = 230 000 Дж = 230 кДж.'},
+
+  {f:'vapor', u:'кДж', a:690,
+   q:'В теплообменнике конденсируется 0,3 кг водяного пара при 100 °C. Сколько теплоты при этом выделяется? L = 2,3 МДж/кг.',
+   s:'Q = 2 300 000 · 0,3 = 690 000 Дж = 690 кДж.'},
+
+  {f:'vapor', u:'кДж', a:685,
+   q:'В холодильной установке испаряется 0,5 кг аммиака. L аммиака = 1 370 000 Дж/кг. Какое количество теплоты поглощается?',
+   s:'Q = 1 370 000 · 0,5 = 685 000 Дж = 685 кДж.'},
+
+  {f:'vapor', u:'кг', a:0.2,
+   q:'При конденсации пара выделилось 460 кДж теплоты. L = 2 300 000 Дж/кг. Какая масса пара сконденсировалась?',
+   s:'m = Q/L = 460 000 / 2 300 000 = 0,2 кг.'},
+
+  {f:'vapor', u:'МДж', a:1.8,
+   q:'Сколько теплоты потребуется, чтобы испарить 2 кг спирта при температуре кипения? L спирта = 900 000 Дж/кг.',
+   s:'Q = 900 000 · 2 = 1 800 000 Дж = 1,8 МДж.'},
+
+  /* ---------- Q = qm : 5 задач ---------- */
+  {f:'burn', u:'МДж', a:17.2,
+   q:'Сколько теплоты выделится при полном сгорании 0,4 кг дизельного топлива? q = 43 МДж/кг.',
+   s:'Q = q·m = 43 · 0,4 = 17,2 МДж.'},
+
+  {f:'burn', u:'кг', a:1,
+   q:'Двигатель получил 46 МДж теплоты за счёт сгорания бензина (q = 46 МДж/кг). Сколько килограммов бензина сгорело?',
+   s:'m = Q/q = 46 / 46 = 1 кг.'},
+
+  {f:'burn', u:'МДж', a:67.5,
+   q:'В котельной сжигают 2,5 кг каменного угля. q = 27 МДж/кг. Сколько теплоты выделится?',
+   s:'Q = 27 · 2,5 = 67,5 МДж.'},
+
+  {f:'burn', u:'МДж', a:52.8,
+   q:'При сгорании 1,2 кг природного газа выделяется теплота. q = 44 МДж/кг. Найдите количество теплоты.',
+   s:'Q = 44 · 1,2 = 52,8 МДж.'},
+
+  {f:'burn', u:'кг', a:3,
+   q:'Сколько килограммов сухих дров нужно сжечь, чтобы получить 30 МДж теплоты? q дров = 10 МДж/кг.',
+   s:'m = Q/q = 30 / 10 = 3 кг.'},
+
+  /* ---------- η : 5 задач ---------- */
+  {f:'eff', u:'%', a:40,
+   q:'На нагрев воды пошло 120 кДж полезной теплоты, а сгоревшее топливо дало 300 кДж. Каков КПД нагревателя?',
+   s:'η = Qполезн / Qзатрач · 100% = 120 / 300 · 100 = 40%.'},
+
+  {f:'eff', u:'%', a:75,
+   q:'Котёл передал теплоносителю 1,8 МДж, при этом топливо дало 2,4 МДж. Найдите КПД котла.',
+   s:'η = 1,8 / 2,4 · 100 = 75%.'},
+
+  {f:'eff', u:'кг', a:1,
+   q:'Водонагреватель с КПД 80% отдал воде 8 МДж полезной теплоты. Сколько килограммов дров (q = 10 МДж/кг) при этом сгорело?',
+   s:'Qзатрач = Qполезн / η = 8 / 0,8 = 10 МДж; m = Q/q = 10 / 10 = 1 кг.'},
+
+  {f:'eff', u:'%', a:46,
+   q:'На полезную работу двигателя пошло 92 МДж, а топливо выделило 200 МДж. Найдите КПД двигателя.',
+   s:'η = 92 / 200 · 100 = 46%.'},
+
+  {f:'eff', u:'кДж', a:150,
+   q:'КПД газовой горелки 60%. Топливо выделило 250 кДж. Сколько полезной теплоты пошло на нагрев детали?',
+   s:'Qполезн = η · Qзатрач = 0,6 · 250 = 150 кДж.'}
+];
+
+/* =========================================================
+   СОСТОЯНИЕ
+   ========================================================= */
+const state = {
+  student:'',
+  group:'',
+  formulaKey:'heat',
+  slots:{},
+  panel:[],
+  tasks:[],
+  score:0
+};
+
+/* =========================================================
+   УТИЛИТЫ
+   ========================================================= */
+function $(id){ return document.getElementById(id); }
+
+function shuffle(arr){
+  for(let i = arr.length - 1; i > 0; i--){
+    const j = Math.floor(Math.random() * (i + 1));
+    const tmp = arr[i]; arr[i] = arr[j]; arr[j] = tmp;
+  }
+  return arr;
+}
+
+function parseNum(str){
+  if(str === null || str === undefined) return null;
+  let s = String(str).trim().replace(/\s+/g, '').replace(',', '.').replace(/[°%]/g, '');
+  if(s === '') return null;
+  const v = parseFloat(s);
+  return isNaN(v) ? null : v;
+}
+
+function fmt(n){
+  return Number(n).toLocaleString('ru-RU', {maximumFractionDigits: 2});
+}
+
+function escapeHtml(s){
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function showScreen(id){
+  ['screenId','screenFormula','screenTasks'].forEach(function(s){
+    $(s).classList.toggle('active', s === id);
+  });
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+/* =========================================================
+   ЭКРАН 1 — ИДЕНТИФИКАЦИЯ
+   ========================================================= */
+(function restoreStudent(){
+  try{
+    const raw = sessionStorage.getItem('phys_student');
+    if(raw){
+      const d = JSON.parse(raw);
+      $('inpName').value = d.name || '';
+      $('inpGroup').value = d.group || '';
+    }
+  }catch(e){}
+})();
+
+$('startBtn').addEventListener('click', startWork);
+$('inpName').addEventListener('keydown', function(e){ if(e.key === 'Enter') startWork(); });
+$('inpGroup').addEventListener('keydown', function(e){ if(e.key === 'Enter') startWork(); });
+
+function startWork(){
+  const name = $('inpName').value.trim();
+  const grp  = $('inpGroup').value.trim();
+  if(!name || !grp){
+    alert('Пожалуйста, заполните фамилию студента и номер группы.');
+    return;
+  }
+  state.student = name;
+  state.group = grp;
+  try{
+    sessionStorage.setItem('phys_student', JSON.stringify({name:name, group:grp}));
+  }catch(e){}
+  renderTabs();
+  renderFormula();
+  showScreen('screenFormula');
+}
+
+/* =========================================================
+   ЭКРАН 2 — КОНСТРУКТОР ФОРМУЛЫ
+   ========================================================= */
+function renderTabs(){
+  const box = $('tabs');
+  box.innerHTML = '';
+  Object.keys(FORMULAS).forEach(function(key){
+    const b = document.createElement('button');
+    b.className = 'tab' + (key === state.formulaKey ? ' active' : '');
+    b.type = 'button';
+    b.textContent = FORMULAS[key].tab;
+    b.addEventListener('click', function(){
+      if(state.formulaKey === key) return;
+      state.formulaKey = key;
+      renderTabs();
+      renderFormula();
+    });
+    box.appendChild(b);
+  });
+  const f = FORMULAS[state.formulaKey];
+  $('formulaLine').innerHTML = '<b>' + f.tab + '.</b> ' + f.desc;
+}
+
+function buildSlot(def){
+  const el = document.createElement('div');
+  el.className = 'slot';
+  el.dataset.slot = def.id;
+  el.dataset.ans  = def.ans;
+  el.dataset.hint = def.hint;
+
+  const val = document.createElement('span');
+  val.className = 'val';
+  val.innerHTML = '<span class="ph">?</span>';
+  el.appendChild(val);
+
+  const tip = document.createElement('span');
+  tip.className = 'tip';
+  tip.textContent = def.hint;
+  el.appendChild(tip);
+
+  el.addEventListener('dragover', function(e){
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    el.classList.add('over');
+  });
+  el.addEventListener('dragleave', function(){ el.classList.remove('over'); });
+  el.addEventListener('drop', function(e){
+    e.preventDefault();
+    el.classList.remove('over');
+    const token = e.dataTransfer.getData('text/plain');
+    if(token) dropToken(el, token);
+  });
+  el.addEventListener('click', function(){ clearSlot(el); });
+
+  return el;
+}
+
+function dropToken(el, token){
+  const id = el.dataset.slot;
+  if(state.slots[id]) return;
+  if(state.panel.indexOf(token) === -1) return;
+
+  state.slots[id] = token;
+  state.panel = state.panel.filter(function(t){ return t !== token; });
+
+  el.querySelector('.val').innerHTML = label(token);
+  el.classList.add('filled');
+  el.classList.remove('error');
+
+  renderPanel();
+  $('formulaErrors').innerHTML = '';
+}
+
+function clearSlot(el){
+  const id = el.dataset.slot;
+  const token = state.slots[id];
+  if(!token) return;
+
+  delete state.slots[id];
+  el.classList.remove('filled','error');
+  el.querySelector('.val').innerHTML = '<span class="ph">?</span>';
+  state.panel.push(token);
+
+  renderPanel();
+  $('formulaErrors').innerHTML = '';
+}
+
+function renderPanel(){
+  const f = FORMULAS[state.formulaKey];
+  const order = f.cards;
+  state.panel.sort(function(a,b){ return order.indexOf(a) - order.indexOf(b); });
+
+  const box = $('cardsBox');
+  box.innerHTML = '';
+
+  if(state.panel.length === 0){
+    const n = document.createElement('span');
+    n.className = 'empty-note';
+    n.textContent = 'Все карточки размещены. Нажмите «Проверить».';
+    box.appendChild(n);
+    return;
+  }
+
+  state.panel.forEach(function(tok){
+    const c = document.createElement('div');
+    c.className = 'card';
+    c.draggable = true;
+    c.innerHTML = label(tok);
+
+    c.addEventListener('dragstart', function(e){
+      e.dataTransfer.setData('text/plain', tok);
+      e.dataTransfer.effectAllowed = 'move';
+      c.classList.add('dragging');
+    });
+    c.addEventListener('dragend', function(){ c.classList.remove('dragging'); });
+
+    box.appendChild(c);
+  });
+}
+
+function renderFormula(){
+  const f = FORMULAS[state.formulaKey];
+  state.slots = {};
+  state.panel = f.cards.slice();
+  shuffle(state.panel);
+
+  const zone = $('buildZone');
+  zone.innerHTML = '';
+  zone.classList.remove('ok');
+
+  f.layout.forEach(function(item){
+    if(item.t === 'fix'){
+      const s = document.createElement('span');
+      s.className = 'fix';
+      s.textContent = item.v;
+      zone.appendChild(s);
+    } else if(item.t === 'slot'){
+      zone.appendChild(buildSlot(item));
+    } else if(item.t === 'frac'){
+      const fr = document.createElement('div');
+      fr.className = 'frac';
+      fr.appendChild(buildSlot(item.top));
+      const bar = document.createElement('div');
+      bar.className = 'bar';
+      fr.appendChild(bar);
+      fr.appendChild(buildSlot(item.bottom));
+      zone.appendChild(fr);
+    }
+  });
+
+  renderPanel();
+  $('formulaErrors').innerHTML = '';
+  $('formulaLine').innerHTML = '<b>' + f.tab + '.</b> ' + f.desc;
+}
+
+function checkFormula(){
+  const slots = Array.prototype.slice.call(document.querySelectorAll('#buildZone .slot'));
+  const errors = [];
+  let allOk = true;
+
+  slots.forEach(function(el, idx){
+    el.classList.remove('error');
+    const id  = el.dataset.slot;
+    const val = state.slots[id];
+    const ans = el.dataset.ans;
+
+    if(!val){
+      allOk = false;
+      el.classList.add('error');
+      errors.push('Слот ' + (idx + 1) + ': не заполнен. ' + el.dataset.hint);
+    } else if(val !== ans){
+      allOk = false;
+      el.classList.add('error');
+      errors.push('Слот ' + (idx + 1) + ': элемент «' + val + '» не подходит. ' + el.dataset.hint);
+    }
+  });
+
+  const box = $('formulaErrors');
+
+  if(allOk){
+    $('buildZone').classList.add('ok');
+    box.innerHTML = '<div class="msg ok">✔ Формула собрана верно! Переходим к задачам…</div>';
+    setTimeout(openTasks, 900);
+  } else {
+    $('buildZone').classList.remove('ok');
+    box.innerHTML = '<div class="msg bad">✘ Формула собрана неверно. Исправьте отмеченные слоты:</div>' +
+                    '<ul class="err-list">' + errors.map(function(e){
+                      return '<li>' + escapeHtml(e) + '</li>';
+                    }).join('') + '</ul>';
+  }
+}
+
+$('checkFormulaBtn').addEventListener('click', checkFormula);
+$('resetFormulaBtn').addEventListener('click', function(){
+  renderFormula();
+});
+
+/* =========================================================
+   ЭКРАН 3 — ЗАДАЧИ
+   ========================================================= */
+function openTasks(){
+  const pool = TASKS.filter(function(t){ return t.f === state.formulaKey; });
+  state.tasks = shuffle(pool.slice()).slice(0, 5);
+
+  $('tasksSub').textContent = 'Формула: ' + FORMULAS[state.formulaKey].tab +
+    '. Ответ вводите числом в указанных единицах (дробная часть — через запятую или точку).';
+
+  renderTasks();
+
+  $('resultBox').style.display = 'none';
+  $('reportBox').style.display = 'none';
+  $('reportBox').innerHTML = '';
+
+  showScreen('screenTasks');
+}
+
+function renderTasks(){
+  const box = $('taskList');
+  box.innerHTML = '';
+
+  state.tasks.forEach(function(task, i){
+    const card = document.createElement('div');
+    card.className = 'task';
+    card.id = 'task' + i;
+
+    const num = document.createElement('div');
+    num.className = 'task-num';
+    num.textContent = 'Задача ' + (i + 1);
+
+    const txt = document.createElement('div');
+    txt.className = 'task-text';
+    txt.textContent = task.q;
+
+    const row = document.createElement('div');
+    row.className = 'answer-row';
+
+    const inp = document.createElement('input');
+    inp.type = 'text';
+    inp.id = 'ans' + i;
+    inp.placeholder = 'Ответ';
+    inp.autocomplete = 'off';
+    inp.setAttribute('inputmode', 'decimal');
+
+    const unit = document.createElement('span');
+    unit.className = 'unit';
+    unit.textContent = task.u;
+
+    row.appendChild(inp);
+    row.appendChild(unit);
+
+    const fb = document.createElement('div');
+    fb.className = 'fb';
+    fb.id = 'fb' + i;
+    fb.style.display = 'none';
+
+    card.appendChild(num);
+    card.appendChild(txt);
+    card.appendChild(row);
+    card.appendChild(fb);
+
+    box.appendChild(card);
+  });
+}
+
+function checkAnswers(){
+  let score = 0;
+  const wrong = [];
+
+  state.tasks.forEach(function(task, i){
+    const inp  = $('ans' + i);
+    const card = $('task' + i);
+    const fb   = $('fb' + i);
+
+    const v  = parseNum(inp.value);
+    const ok = (v !== null) && (Math.abs(v - task.a) <= Math.max(Math.abs(task.a) * 0.02, 0.01));
+
+    card.classList.remove('correct', 'wrong');
+    fb.style.display = 'block';
+
+    if(ok){
+      score++;
+      card.classList.add('correct');
+      fb.className = 'fb ok';
+      fb.innerHTML = '✔ Верно!';
+    } else {
+      card.classList.add('wrong');
+      fb.className = 'fb no';
+      fb.innerHTML = '✘ Неверно. Правильный ответ: <b>' + fmt(task.a) + ' ' + task.u + '</b>.<br>' +
+                     'Решение: ' + escapeHtml(task.s);
+      wrong.push(i);
+    }
+  });
+
+  state.score = score;
+
+  /* --- Итоговый результат --- */
+  const res = $('resultBox');
+  res.style.display = 'block';
+
+  if(score === 5){
+    res.className = 'result win';
+    res.innerHTML = '🏆 Молодец! 5 из 5 баллов!<br>Ты уверенно применяешь формулу и умеешь считать «производственную» физику.';
+  } else {
+    res.className = 'result lose';
+    res.innerHTML = 'Баллов: <b>' + score + ' из 5</b>. Разбери задачи, отмеченные красным, ' +
+                    'запиши решения в тетрадь и попробуй снова — практика решает!';
+  }
+
+  buildReport(score, wrong);
+}
+
+function buildReport(score, wrong){
+  const date = new Date().toLocaleDateString('ru-RU'); // ДД.ММ.ГГГГ
+  const comment = (score === 5) ? 'Молодец!' : 'Требуется дополнительная отработка темы';
+  const csvRow = state.student + ',' + state.group + ',,' + score + ',' + date + ',' + comment;
+
+  let solutionsHtml = '';
+  if(wrong.length === 0){
+    solutionsHtml = '<div class="sol"><b class="no-err">Ошибок нет — все 5 задач решены верно.</b></div>';
+  } else {
+    solutionsHtml = wrong.map(function(i){
+      const t = state.tasks[i];
+      return '<div class="sol"><b>Задача ' + (i + 1) + '.</b> Правильный ответ: <b>' +
+             fmt(t.a) + ' ' + t.u + '</b><br>' + escapeHtml(t.s) + '</div>';
+    }).join('');
+  }
+
+  const box = $('reportBox');
+  box.style.display = 'block';
+  box.innerHTML =
+    '<h3>Отчёт для преподавателя</h3>' +
+    '<p class="rep-sub">Строка CSV — готова для вставки в Excel (Фамилия, Группа, , Оценка, Дата, Комментарий):</p>' +
+    '<div class="csv-box" id="csvText">' + escapeHtml(csvRow) + '</div>' +
+    '<div class="actions">' +
+      '<button class="btn btn-primary" id="copyBtn">Скопировать в буфер</button>' +
+    '</div>' +
+    '<h4>Разбор ошибок и верные решения</h4>' + solutionsHtml;
+
+  $('copyBtn').addEventListener('click', copyCSV);
+}
+
+function copyCSV(){
+  const el = $('csvText');
+  if(!el) return;
+  const text = el.textContent;
+
+  function done(){
+    const b = $('copyBtn');
+    if(!b) return;
+    const old = b.textContent;
+    b.textContent = 'Скопировано ✓';
+    setTimeout(function(){ b.textContent = old; }, 1600);
+  }
+
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).then(done).catch(fallback);
+  } else {
+    fallback();
+  }
+
+  function fallback(){
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    try{ document.execCommand('copy'); done(); }catch(e){ alert('Не удалось скопировать. Скопируйте строку вручную.'); }
+    document.body.removeChild(ta);
+  }
+}
+
+function backToFormula(){
+  state.tasks = [];
+  state.score = 0;
+  $('taskList').innerHTML = '';
+  $('resultBox').style.display = 'none';
+  $('resultBox').className = 'result';
+  $('reportBox').style.display = 'none';
+  $('reportBox').innerHTML = '';
+
+  renderTabs();
+  renderFormula();
+  showScreen('screenFormula');
+}
+
+$('checkAnswersBtn').addEventListener('click', checkAnswers);
+$('backBtn').addEventListener('click', backToFormula);
+
+/* =========================================================
+   СТАРТ
+   ========================================================= */
+renderTabs();
+renderFormula();
+</script>
+</body>
+</html>
